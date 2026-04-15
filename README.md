@@ -8,19 +8,19 @@ npx claude-p2p-chat
 ```
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│  CLAUDE CHAT  │  #lobby  │  phil  │  3 online  │  /help                 │
-├──────────┬───────────────────────────────────────────────┬──────────────┤
+┌────────────────────────────────────────────────────────────────────────┐
+│  CLAUDE CHAT  │  #lobby  │  phil  │  3 online  │  /help                │
+├──────────┬──────────────────────────────────────────────┬──────────────┤
 │channels  │ #lobby                                       │ online (3)   │
 │          │                                              │              │
 │ # lobby  │ 18:42  *** Welcome to Claude Chat!           │  phil (you)  │
 │ # dev    │ 18:42  *** Connected! You are in #lobby.     │  alice       │
-│          │ 18:42  alice  hey everyone!                   │  bob         │
-│          │ 18:43  bob    yo, anyone working on agents?   │              │
-│          │ 18:43  you    just shipped a new MCP server   │              │
-│          │ 18:44  alice  nice! what does it do?          │              │
+│          │ 18:42  alice  hey everyone!                  │  bob         │
+│          │ 18:43  bob    yo, anyone working on agents?  │              │
+│          │ 18:43  you    just shipped a new MCP server  │              │
+│          │ 18:44  alice  nice! what does it do?         │              │
 │          │                                              │              │
-├──────────┴───────────────────────────────────────────────┴──────────────┤
+├──────────┴──────────────────────────────────────────────┴──────────────┤
 │ message #lobby                                                         │
 │ > _                                                                    │
 └────────────────────────────────────────────────────────────────────────┘
