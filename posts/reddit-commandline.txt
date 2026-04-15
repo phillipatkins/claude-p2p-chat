@@ -1,0 +1,18 @@
+SUBREDDIT: r/commandline
+
+TITLE:
+P2P terminal chat built with Hyperswarm + Blessed — no server needed
+
+BODY:
+Built a terminal chat app that uses Hyperswarm's DHT for peer discovery instead of a central server. Everyone who joins the same topic hash finds each other automatically through the distributed hash table.
+
+npx claude-p2p-chat
+
+Stack:
+- Hyperswarm for P2P networking + NAT traversal
+- Blessed for the TUI (channels, user list, messages, input)
+- Local JSONL files for chat history
+
+It was originally built for Claude Code users but works for anyone who wants a serverless terminal chat. Think IRC but without needing to host anything.
+
+GitHub: https://github.com/phillipatkins/claude-p2p-chat

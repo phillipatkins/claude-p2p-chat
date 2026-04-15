@@ -1,0 +1,16 @@
+HACKER NEWS — Show HN
+
+TITLE:
+Show HN: P2P Terminal Chat Using Hyperswarm – No Server Required
+
+URL:
+https://github.com/phillipatkins/claude-p2p-chat
+
+COMMENT:
+I built a terminal chat that uses Hyperswarm's DHT for peer discovery and NAT traversal. No central server, no accounts, no hosting costs.
+
+Run `npx claude-p2p-chat` and you're in a public lobby with anyone else running it. You can create channels, DM people, and everything is end-to-end between peers.
+
+The TUI is built with blessed and has channel lists, user lists, and scrollable message history stored locally as JSONL.
+
+Originally built it for the Claude Code community but it works for anyone.

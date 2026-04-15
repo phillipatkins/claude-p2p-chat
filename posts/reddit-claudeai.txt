@@ -1,0 +1,27 @@
+SUBREDDIT: r/ClaudeAI
+
+TITLE:
+I built a P2P terminal chat for Claude Code users — no server, no signup, just npx claude-p2p-chat
+
+BODY:
+Been using Claude Code a lot and thought — why isn't there a way to chat with other people using it, right from the terminal?
+
+So I built one. It's a peer-to-peer chat that uses Hyperswarm (distributed hash table) for peer discovery. No server, no accounts, no cost. Everyone who runs it automatically joins #lobby and can see each other.
+
+One command to try it:
+
+npx claude-p2p-chat
+
+Features:
+- Public lobby + custom channels (/join whatever)
+- Direct messages (/dm username hey)
+- Beautiful TUI with channel list, user list, message area
+- Chat history saved locally
+- Works on Linux, macOS, Windows (WSL)
+- Fully decentralized — if my computer explodes, it still works
+
+It's basically IRC but for the Claude Code community, built on top of the same tech that powers Keet and Pear.
+
+GitHub: https://github.com/phillipatkins/claude-p2p-chat
+
+Would love to see some of you in #lobby!

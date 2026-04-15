@@ -1,0 +1,20 @@
+SUBREDDIT: r/node
+
+TITLE:
+Built a P2P chat with Hyperswarm + Blessed — zero infrastructure
+
+BODY:
+Wanted to experiment with Hyperswarm for something practical, so I built a terminal chat where peers discover each other through the DHT. No server, no WebSocket relay, no Firebase — just direct connections between nodes.
+
+npx claude-p2p-chat
+
+The interesting bits technically:
+- Hyperswarm handles peer discovery + NAT traversal via DHT
+- Each "channel" is a SHA-256 hash that peers join as a topic
+- Messages are JSON over encrypted streams
+- Blessed renders the TUI (channels sidebar, user list, message log)
+- History is local JSONL per channel
+
+Happy to answer questions about the Hyperswarm experience — it was surprisingly easy to get working.
+
+GitHub: https://github.com/phillipatkins/claude-p2p-chat

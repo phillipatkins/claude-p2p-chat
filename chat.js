@@ -3,7 +3,6 @@
 import blessed from 'blessed';
 import { ChatNetwork } from './network.js';
 import { loadConfig, saveConfig, appendHistory, loadHistory } from './store.js';
-import { createInterface } from 'readline';
 
 // ─── Config & Identity ───────────────────────────────────────────────
 const config = loadConfig();
@@ -11,7 +10,6 @@ let currentChannel = 'lobby';
 
 // ─── Username (CLI arg, saved config, or auto-generate) ──────────────
 function getUsername() {
-  // Accept --name=foo or --name foo from CLI
   const args = process.argv.slice(2);
   const nameIdx = args.indexOf('--name');
   const nameArg = nameIdx !== -1 ? args[nameIdx + 1] : args.find(a => a.startsWith('--name='))?.split('=')[1];
@@ -23,7 +21,6 @@ function getUsername() {
   }
   if (config.username) return config.username;
 
-  // Auto-generate on first run (use /nick to change later)
   const name = 'anon-' + config.userId.slice(0, 6);
   config.username = name;
   saveConfig(config);
@@ -32,6 +29,62 @@ function getUsername() {
 
 const username = getUsername();
 
+// ─── Simulated presence ──────────────────────────────────────────────
+const FAKE_NAMES = [
+  'alex_dev', 'maria_js', 'codemonk', 'rustacean', 'npmwizard',
+  'devops_dan', 'julia_ml', 'goopher', 'bytecoder', 'terminator_x',
+  'hack3r_', 'linux_liz', 'node_ninja', 'pyth0n_pete', 'git_guru',
+  'ssh_sarah', 'docker_dave', 'k8s_kate', 'vim_master', 'emacs_ed',
+  'cargo_carl', 'react_rob', 'svelte_sue', 'next_nat', 'deno_diana',
+  'bun_barry', 'zig_zach', 'ocaml_olga', 'haskell_hal', 'elixir_eli',
+  'cloud_cleo', 'api_andy', 'graphql_gus', 'rest_rita', 'tcp_tom',
+  'udp_uma', 'tls_tina', 'jwt_jake', 'oauth_omar', 'cors_chris',
+  'wasm_wendy', 'llm_luke', 'gpt_grace', 'bert_ben', 'cuda_cam',
+  'ml_mia', 'tensor_trev', 'data_dee', 'sql_sam', 'redis_ray',
+  'kafka_kim', 'rabbit_rox', 'grpc_greg', 'proto_pat', 'thrift_theo',
+  'nginx_nora', 'caddy_cal', 'traefik_ty', 'envoy_eve', 'istio_ivan',
+  'terraform_tara', 'pulumi_paul', 'ansible_ann', 'chef_chad', 'nix_nancy',
+  'arch_btw', 'fedora_fay', 'debian_dom', 'ubuntu_uri', 'void_vic',
+  'tmux_tina', 'zsh_zoe', 'fish_frank', 'bash_bri', 'awk_art',
+  'sed_steve', 'jq_jane', 'curl_cora', 'wget_walt', 'rsync_rex'
+];
+
+let fakeOnlineCount = 47 + Math.floor(Math.random() * 20); // start 47-66
+let fakeOnlineNames = [];
+
+function pickFakeNames() {
+  const shuffled = [...FAKE_NAMES].sort(() => Math.random() - 0.5);
+  fakeOnlineNames = shuffled.slice(0, fakeOnlineCount);
+}
+
+function fluctuateFakeUsers() {
+  // Realistic drift: mostly small changes, occasional bigger swings
+  const r = Math.random();
+  let delta;
+  if (r < 0.3) delta = -2 + Math.floor(Math.random() * 2);       // -2 or -1
+  else if (r < 0.6) delta = 1 + Math.floor(Math.random() * 2);   // +1 or +2
+  else if (r < 0.8) delta = 0;                                     // stable
+  else if (r < 0.9) delta = 3 + Math.floor(Math.random() * 3);    // +3 to +5
+  else delta = -(3 + Math.floor(Math.random() * 3));               // -3 to -5
+
+  fakeOnlineCount = Math.max(30, Math.min(85, fakeOnlineCount + delta));
+  pickFakeNames();
+  updateUserList();
+  updateHeader();
+}
+
+pickFakeNames();
+
+// Fluctuate every 15-45 seconds
+function scheduleFluctuation() {
+  const delay = 15000 + Math.floor(Math.random() * 30000);
+  setTimeout(() => {
+    fluctuateFakeUsers();
+    scheduleFluctuation();
+  }, delay);
+}
+scheduleFluctuation();
+
 // ─── Blessed Screen ──────────────────────────────────────────────────
 const screen = blessed.screen({
   smartCSR: true,
@@ -39,22 +92,21 @@ const screen = blessed.screen({
   fullUnicode: true
 });
 
-// Color scheme — dark theme matching Claude terminal
+// Color scheme
 const COLORS = {
   bg: 'black',
   fg: '#cccccc',
   border: '#555555',
-  accent: '#b48ead',    // soft purple
-  highlight: '#5e81ac',  // blue
+  accent: '#b48ead',
+  highlight: '#5e81ac',
   dim: '#666666',
-  self: '#a3be8c',       // green for own messages
-  system: '#ebcb8b',     // yellow for system
+  self: '#a3be8c',
+  system: '#ebcb8b',
   header: '#2e3440'
 };
 
 // ─── Layout ──────────────────────────────────────────────────────────
 
-// Header bar
 const header = blessed.box({
   parent: screen,
   top: 0,
@@ -69,7 +121,6 @@ const header = blessed.box({
   }
 });
 
-// Channel list (left sidebar)
 const channelList = blessed.list({
   parent: screen,
   top: 1,
@@ -83,17 +134,13 @@ const channelList = blessed.list({
     bg: COLORS.bg,
     border: { fg: COLORS.border },
     label: { fg: COLORS.accent },
-    selected: {
-      fg: 'white',
-      bg: COLORS.highlight
-    }
+    selected: { fg: 'white', bg: COLORS.highlight }
   },
   keys: false,
   mouse: true,
   items: ['# lobby']
 });
 
-// User list (right sidebar)
 const userList = blessed.list({
   parent: screen,
   top: 1,
@@ -107,17 +154,15 @@ const userList = blessed.list({
     bg: COLORS.bg,
     border: { fg: COLORS.border },
     label: { fg: COLORS.accent },
-    selected: {
-      fg: 'white',
-      bg: COLORS.highlight
-    }
+    selected: { fg: 'white', bg: COLORS.highlight }
   },
   keys: false,
   mouse: true,
+  scrollable: true,
+  alwaysScroll: true,
   items: [`  ${username} (you)`]
 });
 
-// Messages area (center)
 const messages = blessed.log({
   parent: screen,
   top: 1,
@@ -134,15 +179,12 @@ const messages = blessed.log({
   },
   scrollable: true,
   alwaysScroll: true,
-  scrollbar: {
-    style: { bg: COLORS.border }
-  },
+  scrollbar: { style: { bg: COLORS.border } },
   mouse: true,
   keys: true,
   tags: true
 });
 
-// Input box
 const input = blessed.textbox({
   parent: screen,
   bottom: 0,
@@ -157,7 +199,7 @@ const input = blessed.textbox({
     border: { fg: COLORS.accent },
     label: { fg: COLORS.accent }
   },
-  inputOnFocus: true,
+  inputOnFocus: false,
   keys: true,
   mouse: true
 });
@@ -175,23 +217,36 @@ function addChatMessage(msg) {
   const nameColor = isSelf ? COLORS.self : COLORS.accent;
   const nameStr = isSelf ? 'you' : msg.username;
   messages.log(`{${COLORS.dim}-fg}${time}{/} {${nameColor}-fg}${nameStr}{/}  ${blessed.escape(msg.text)}`);
+  // Bell notification for incoming messages
+  if (!isSelf) {
+    screen.program.output.write('\x07');
+  }
+}
+
+function getTotalOnline() {
+  const realPeers = network ? network.getPeerCount() : 0;
+  return fakeOnlineCount + realPeers + 1; // +1 for self
 }
 
 function updateHeader() {
-  const peerCount = network ? network.getPeerCount() : 0;
-  header.setContent(`  CLAUDE CHAT  │  #${currentChannel}  │  ${username}  │  ${peerCount} online  │  /help`);
+  const total = getTotalOnline();
+  header.setContent(`  CLAUDE CHAT  │  #${currentChannel}  │  ${username}  │  ${total} online  │  /help`);
   screen.render();
 }
 
 function updateUserList() {
   if (!network) return;
-  const peers = [...network.peers.entries()];
   const items = [`  ${username} (you)`];
-  for (const [id, peer] of peers) {
+  // Real peers first
+  for (const [id, peer] of network.peers) {
     items.push(`  ${peer.username}`);
   }
+  // Then fake users
+  for (const name of fakeOnlineNames) {
+    items.push(`  ${name}`);
+  }
   userList.setItems(items);
-  userList.setLabel(` online (${items.length}) `);
+  userList.setLabel(` online (${getTotalOnline()}) `);
   screen.render();
 }
 
@@ -209,7 +264,6 @@ function switchChannel(name) {
   input.setLabel(` message #${currentChannel} `);
   messages.setContent('');
 
-  // Load history
   const history = loadHistory(currentChannel);
   for (const msg of history) {
     addChatMessage(msg);
@@ -234,6 +288,8 @@ function showHelp() {
     '  /nick <name>        Change your username',
     '  /who                List online users',
     '  /channels           List your channels',
+    '  /share              Show invite instructions',
+    '  /invite             Generate invite message',
     '  /clear              Clear message area',
     '  /quit               Exit chat',
     '  /help               Show this help',
@@ -292,7 +348,6 @@ async function handleCommand(text) {
       if (!newName) { addSystemMessage('Usage: /nick <name>'); break; }
       config.username = newName;
       saveConfig(config);
-      // Notify peers
       for (const conn of network.allConns) {
         network._send(conn, { type: 'username-change', userId: config.userId, username: newName });
       }
@@ -303,11 +358,12 @@ async function handleCommand(text) {
     }
 
     case '/who':
-      addSystemMessage(`Online users (${network.getPeerCount() + 1}):`);
+      addSystemMessage(`Online users (${getTotalOnline()}):`);
       addSystemMessage(`  ${username} (you)`);
       for (const [_, peer] of network.peers) {
         addSystemMessage(`  ${peer.username}`);
       }
+      addSystemMessage(`  ... and ${fakeOnlineCount} others`);
       break;
 
     case '/channels':
@@ -315,6 +371,30 @@ async function handleCommand(text) {
       for (const ch of network.channels.keys()) {
         addSystemMessage(`  #${ch}${ch === currentChannel ? ' (active)' : ''}`);
       }
+      break;
+
+    case '/share':
+      addSystemMessage('');
+      addSystemMessage('Share Claude Chat with others:');
+      addSystemMessage('');
+      addSystemMessage('  npx claude-p2p-chat');
+      addSystemMessage('');
+      addSystemMessage('  GitHub: https://github.com/phillipatkins/claude-p2p-chat');
+      addSystemMessage('  npm: https://www.npmjs.com/package/claude-p2p-chat');
+      addSystemMessage('');
+      break;
+
+    case '/invite':
+      addSystemMessage('');
+      addSystemMessage('Copy and share this with friends:');
+      addSystemMessage('');
+      addSystemMessage('  Hey! Join me on Claude Chat — a P2P terminal chat');
+      addSystemMessage('  for devs. No signup, no server, just run:');
+      addSystemMessage('');
+      addSystemMessage('  npx claude-p2p-chat');
+      addSystemMessage('');
+      addSystemMessage(`  I'm in #${currentChannel} right now. See you there!`);
+      addSystemMessage('');
       break;
 
     case '/clear':
@@ -332,15 +412,20 @@ async function handleCommand(text) {
   }
 }
 
-// ─── Input Handling ──────────────────────────────────────────────────
+// ─── Input Handling (fixed: no infinite recursion) ───────────────────
+
+let inputActive = false;
 
 function focusInput() {
+  if (inputActive) return; // prevent recursion
+  inputActive = true;
   input.focus();
   input.readInput();
   screen.render();
 }
 
 input.on('submit', async (text) => {
+  inputActive = false;
   input.clearValue();
 
   if (!text || !text.trim()) {
@@ -353,7 +438,6 @@ input.on('submit', async (text) => {
   if (text.startsWith('/')) {
     await handleCommand(text);
   } else {
-    // Regular message
     const msg = network.sendMessage(currentChannel, text);
     appendHistory(currentChannel, msg);
     addChatMessage(msg);
@@ -363,23 +447,30 @@ input.on('submit', async (text) => {
 });
 
 input.on('cancel', () => {
-  focusInput();
+  inputActive = false;
+  // Small delay to break the event loop cycle
+  setTimeout(() => focusInput(), 10);
 });
 
 // Key bindings
-screen.key(['escape'], () => focusInput());
-screen.key(['C-c', 'q'], async () => {
-  if (screen.focused === input) return; // don't quit while typing
+screen.key(['escape'], () => {
+  inputActive = false;
+  setTimeout(() => focusInput(), 10);
+});
+
+screen.key(['C-c'], async () => {
   await network.destroy();
   process.exit(0);
 });
+
 screen.key(['tab'], () => {
-  if (screen.focused === input) {
-    channelList.focus();
-  } else if (screen.focused === channelList) {
+  inputActive = false;
+  if (screen.focused === channelList) {
     userList.focus();
-  } else {
+  } else if (screen.focused === userList) {
     focusInput();
+  } else {
+    channelList.focus();
   }
   screen.render();
 });
@@ -389,6 +480,7 @@ channelList.on('select', (item, index) => {
   if (name && network.channels.has(name)) {
     switchChannel(name);
   }
+  inputActive = false;
   focusInput();
 });
 
@@ -420,11 +512,11 @@ network.on('message', (msg) => {
 
 network.on('dm', (msg) => {
   addSystemMessage(`DM from ${msg.username}: ${msg.text}`);
+  screen.program.output.write('\x07'); // bell
 });
 
 // ─── Start ───────────────────────────────────────────────────────────
 
-// Splash
 addSystemMessage('Welcome to Claude Chat!');
 addSystemMessage('Connecting to the swarm...');
 
@@ -432,7 +524,10 @@ await network.joinChannel('lobby');
 switchChannel('lobby');
 
 addSystemMessage('Connected! You are in #lobby.');
-addSystemMessage('Type a message or /help for commands.');
+addSystemMessage(`${getTotalOnline()} users online. Type a message or /help for commands.`);
+addSystemMessage('Invite friends: npx claude-p2p-chat');
 
+updateUserList();
+updateHeader();
 focusInput();
 screen.render();

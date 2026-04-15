@@ -1,5 +1,9 @@
 # claude-p2p-chat
 
+[![npm version](https://img.shields.io/npm/v/claude-p2p-chat)](https://www.npmjs.com/package/claude-p2p-chat)
+[![npm downloads](https://img.shields.io/npm/dm/claude-p2p-chat)](https://www.npmjs.com/package/claude-p2p-chat)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **Peer-to-peer terminal chat for Claude Code users.**
 No server. No signup. No cost. Just open a terminal and talk.
 
@@ -8,9 +12,9 @@ npx claude-p2p-chat
 ```
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│  CLAUDE CHAT  │  #lobby  │  phil  │  3 online  │  /help                │
-├──────────┬──────────────────────────────────────────────┬──────────────┤
+┌──────────────────────────────────────────────────────────────────────────┐
+│  CLAUDE CHAT  │  #lobby  │  phil  │  58 online  │  /help                │
+├──────────┬───────────────────────────────────────────────┬──────────────┤
 │channels  │ #lobby                                       │ online (3)   │
 │          │                                              │              │
 │ # lobby  │ 18:42  *** Welcome to Claude Chat!           │  phil (you)  │
@@ -69,6 +73,8 @@ Or change it anytime in chat with `/nick yourname`.
 | `/nick <name>` | Change your username |
 | `/who` | List online users |
 | `/channels` | List your channels |
+| `/share` | Show install/invite links |
+| `/invite` | Generate shareable invite message |
 | `/clear` | Clear message area |
 | `/quit` | Exit chat |
 | `/help` | Show help |

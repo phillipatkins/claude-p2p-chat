@@ -1,0 +1,13 @@
+TWITTER/X
+
+Just shipped a P2P terminal chat for Claude Code users.
+
+No server. No signup. No cost. One command:
+
+npx claude-p2p-chat
+
+Hyperswarm DHT handles peer discovery. Messages go directly between users. Chat history stays on your machine.
+
+Come hang out in #lobby
+
+https://github.com/phillipatkins/claude-p2p-chat

@@ -1,0 +1,11 @@
+DISCORD — Claude/Anthropic servers, dev tool servers
+
+Hey! Built a terminal chat for Claude Code users — fully P2P, no server needed.
+
+`npx claude-p2p-chat`
+
+Everyone running it connects through Hyperswarm DHT. Public lobby + custom channels + DMs. All in a TUI that looks like IRC.
+
+Repo: https://github.com/phillipatkins/claude-p2p-chat
+
+Would be cool to get a few people in #lobby at the same time!
