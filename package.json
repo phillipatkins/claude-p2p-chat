@@ -1,6 +1,6 @@
 {
   "name": "claude-p2p-chat",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Peer-to-peer terminal chat for Claude Code users. No server, no signup, no cost. Just vibes.",
   "main": "chat.js",
   "bin": {

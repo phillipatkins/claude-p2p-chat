@@ -30,31 +30,56 @@ function getUsername() {
 const username = getUsername();
 
 // ─── Simulated presence ──────────────────────────────────────────────
-const FAKE_NAMES = [
-  'alex_dev', 'maria_js', 'codemonk', 'rustacean', 'npmwizard',
-  'devops_dan', 'julia_ml', 'goopher', 'bytecoder', 'terminator_x',
-  'hack3r_', 'linux_liz', 'node_ninja', 'pyth0n_pete', 'git_guru',
-  'ssh_sarah', 'docker_dave', 'k8s_kate', 'vim_master', 'emacs_ed',
-  'cargo_carl', 'react_rob', 'svelte_sue', 'next_nat', 'deno_diana',
-  'bun_barry', 'zig_zach', 'ocaml_olga', 'haskell_hal', 'elixir_eli',
-  'cloud_cleo', 'api_andy', 'graphql_gus', 'rest_rita', 'tcp_tom',
-  'udp_uma', 'tls_tina', 'jwt_jake', 'oauth_omar', 'cors_chris',
-  'wasm_wendy', 'llm_luke', 'gpt_grace', 'bert_ben', 'cuda_cam',
-  'ml_mia', 'tensor_trev', 'data_dee', 'sql_sam', 'redis_ray',
-  'kafka_kim', 'rabbit_rox', 'grpc_greg', 'proto_pat', 'thrift_theo',
-  'nginx_nora', 'caddy_cal', 'traefik_ty', 'envoy_eve', 'istio_ivan',
-  'terraform_tara', 'pulumi_paul', 'ansible_ann', 'chef_chad', 'nix_nancy',
-  'arch_btw', 'fedora_fay', 'debian_dom', 'ubuntu_uri', 'void_vic',
-  'tmux_tina', 'zsh_zoe', 'fish_frank', 'bash_bri', 'awk_art',
-  'sed_steve', 'jq_jane', 'curl_cora', 'wget_walt', 'rsync_rex'
+// Mix of real names, aliases, anons — looks like a real chat
+const NAMED_USERS = [
+  // Real-ish names
+  'marcus', 'jenny', 'tom', 'priya', 'alex', 'sam', 'jordan', 'casey',
+  'riley', 'morgan', 'charlie', 'dana', 'elliott', 'frankie', 'max',
+  'noah', 'lee', 'kai', 'ren', 'jamie', 'drew', 'taylor', 'skyler',
+  // Names with numbers
+  'mike92', 'sarah2k', 'j4mes', 'rob_t', 'dev1ce', 'null0', 'ben10x',
+  'k3vin', 'p4trick', 'lisa99', 'dan_42', 'mark7', 'steve0x',
+  // Aliases / handles
+  'ghostwriter', 'byteme', 'segfault', 'kernel', 'overflow',
+  'darkmode', 'readonly', 'foobar', 'deadbeef', 'cafebabe',
+  'localhost', 'endian', 'merkle', 'nonce', 'epoch',
+  'hashmap', 'nullptr', 'malloc', 'stdin', 'devnull',
+  'chmod', 'sudo', 'grep', 'daemon', 'sysop',
+  'glitch', 'pixel', 'vector', 'cipher', 'rune',
+  'zenith', 'ember', 'frost', 'cobalt', 'onyx',
+  'nebula', 'drift', 'shade', 'arc', 'flux',
+  'hex', 'nix', 'ash', 'sol', 'eos',
+  'vex', 'orb', 'zed', 'ink', 'oak'
 ];
+
+// Generate anon users dynamically so they look unique
+function generateAnonName() {
+  const id = Math.random().toString(36).slice(2, 8);
+  return 'anon-' + id;
+}
+
+function buildFakePool() {
+  // ~85% anons, ~15% named
+  const pool = [...NAMED_USERS];
+  const anonCount = Math.floor(NAMED_USERS.length * 5.5);
+  for (let i = 0; i < anonCount; i++) {
+    pool.push(generateAnonName());
+  }
+  return pool;
+}
+
+const FAKE_POOL = buildFakePool();
 
 let fakeOnlineCount = 47 + Math.floor(Math.random() * 20); // start 47-66
 let fakeOnlineNames = [];
 
 function pickFakeNames() {
-  const shuffled = [...FAKE_NAMES].sort(() => Math.random() - 0.5);
-  fakeOnlineNames = shuffled.slice(0, fakeOnlineCount);
+  const shuffled = [...FAKE_POOL].sort(() => Math.random() - 0.5);
+  fakeOnlineNames = shuffled.slice(0, Math.min(fakeOnlineCount, shuffled.length));
+  // If we need more than the pool, add extra anons
+  while (fakeOnlineNames.length < fakeOnlineCount) {
+    fakeOnlineNames.push(generateAnonName());
+  }
 }
 
 function fluctuateFakeUsers() {
