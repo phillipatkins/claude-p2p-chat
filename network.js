@@ -4,6 +4,16 @@ import b4a from 'b4a';
 import { EventEmitter } from 'events';
 
 const APP_PREFIX = 'claude-chat-v1-';
+const MAX_TEXT_LEN = 2000;
+const MAX_NAME_LEN = 32;
+const MAX_CHANNEL_LEN = 32;
+const RATE_LIMIT_WINDOW = 5000; // 5 seconds
+const RATE_LIMIT_MAX = 15;      // max messages per window
+
+function sanitizeStr(str, maxLen) {
+  if (typeof str !== 'string') return '';
+  return str.slice(0, maxLen).replace(/[\x00-\x1f]/g, '');
+}
 
 export class ChatNetwork extends EventEmitter {
   constructor(username, userId) {
@@ -14,8 +24,20 @@ export class ChatNetwork extends EventEmitter {
     this.channels = new Map();       // channelName -> { topic, conns: Set }
     this.peers = new Map();          // peerId -> { username, conn, channels }
     this.allConns = new Set();
+    this._rateLimits = new Map();    // peerId -> { count, resetAt }
 
     this.swarm.on('connection', (conn, info) => this._onConnection(conn, info));
+  }
+
+  _isRateLimited(peerId) {
+    const now = Date.now();
+    let entry = this._rateLimits.get(peerId);
+    if (!entry || now > entry.resetAt) {
+      entry = { count: 0, resetAt: now + RATE_LIMIT_WINDOW };
+      this._rateLimits.set(peerId, entry);
+    }
+    entry.count++;
+    return entry.count > RATE_LIMIT_MAX;
   }
 
   _topicHash(channelName) {
@@ -62,9 +84,14 @@ export class ChatNetwork extends EventEmitter {
 
     conn.on('data', (rawData) => {
       try {
+        // Reject oversized payloads
+        if (rawData.length > 10000) return;
         const messages = rawData.toString().split('\n').filter(Boolean);
         for (const raw of messages) {
           const msg = JSON.parse(raw);
+          if (!msg || typeof msg.type !== 'string') continue;
+          // Rate limit per peer
+          if (remotePeerId && this._isRateLimited(remotePeerId)) continue;
           this._handleMessage(conn, msg);
           if (msg.type === 'hello') {
             remotePeerId = msg.userId;
@@ -91,46 +118,63 @@ export class ChatNetwork extends EventEmitter {
 
   _handleMessage(conn, msg) {
     switch (msg.type) {
-      case 'hello':
-        this.peers.set(msg.userId, {
-          username: msg.username,
+      case 'hello': {
+        const userId = sanitizeStr(msg.userId, 64);
+        const uname = sanitizeStr(msg.username, MAX_NAME_LEN);
+        const channels = Array.isArray(msg.channels)
+          ? msg.channels.slice(0, 20).map(c => sanitizeStr(c, MAX_CHANNEL_LEN)).filter(Boolean)
+          : [];
+        if (!userId || !uname) break;
+        this.peers.set(userId, {
+          username: uname,
           conn,
-          channels: new Set(msg.channels || [])
+          channels: new Set(channels)
         });
-        // Track connection in relevant channels
-        for (const ch of (msg.channels || [])) {
+        for (const ch of channels) {
           if (this.channels.has(ch)) {
             this.channels.get(ch).conns.add(conn);
           }
         }
-        this.emit('peer-joined', { userId: msg.userId, username: msg.username, channels: msg.channels });
+        this.emit('peer-joined', { userId, username: uname, channels });
         break;
+      }
 
-      case 'chat':
+      case 'chat': {
+        const text = sanitizeStr(msg.text, MAX_TEXT_LEN);
+        const channel = sanitizeStr(msg.channel, MAX_CHANNEL_LEN);
+        if (!text || !channel) break;
         this.emit('message', {
-          channel: msg.channel,
-          userId: msg.userId,
-          username: msg.username,
-          text: msg.text,
-          timestamp: msg.timestamp
+          channel,
+          userId: sanitizeStr(msg.userId, 64),
+          username: sanitizeStr(msg.username, MAX_NAME_LEN),
+          text,
+          timestamp: typeof msg.timestamp === 'number' ? msg.timestamp : Date.now()
         });
         break;
+      }
 
-      case 'dm':
+      case 'dm': {
+        const dmText = sanitizeStr(msg.text, MAX_TEXT_LEN);
+        if (!dmText) break;
         this.emit('dm', {
-          userId: msg.userId,
-          username: msg.username,
-          text: msg.text,
-          timestamp: msg.timestamp
+          userId: sanitizeStr(msg.userId, 64),
+          username: sanitizeStr(msg.username, MAX_NAME_LEN),
+          text: dmText,
+          timestamp: typeof msg.timestamp === 'number' ? msg.timestamp : Date.now()
         });
         break;
+      }
 
-      case 'username-change':
-        if (this.peers.has(msg.userId)) {
-          this.peers.get(msg.userId).username = msg.username;
+      case 'username-change': {
+        const uid = sanitizeStr(msg.userId, 64);
+        const newName = sanitizeStr(msg.username, MAX_NAME_LEN);
+        if (!uid || !newName) break;
+        if (this.peers.has(uid)) {
+          this.peers.get(uid).username = newName;
         }
-        this.emit('peer-updated', { userId: msg.userId, username: msg.username });
+        this.emit('peer-updated', { userId: uid, username: newName });
         break;
+      }
     }
   }
 

@@ -1,0 +1,11 @@
+been messing around with hyperswarm and ended up building a p2p terminal chat lol. no server or anything, everyone just connects through the DHT. thought it would be cool for people using claude code to be able to chat with each other without leaving the terminal
+
+one command to try it:
+
+npx claude-p2p-chat
+
+its basically like irc but fully peer to peer so theres nothing to host or pay for. you get a public lobby, can make channels, dm people etc. all in a tui
+
+github: https://github.com/phillipatkins/claude-p2p-chat
+
+would be cool to see some people in there

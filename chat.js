@@ -536,7 +536,7 @@ network.on('message', (msg) => {
 });
 
 network.on('dm', (msg) => {
-  addSystemMessage(`DM from ${msg.username}: ${msg.text}`);
+  addSystemMessage(`DM from ${blessed.escape(msg.username)}: ${blessed.escape(msg.text)}`);
   screen.program.output.write('\x07'); // bell
 });
 
