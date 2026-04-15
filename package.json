@@ -1,0 +1,51 @@
+{
+  "name": "claude-p2p-chat",
+  "version": "1.0.0",
+  "description": "Peer-to-peer terminal chat for Claude Code users. No server, no signup, no cost. Just vibes.",
+  "main": "chat.js",
+  "bin": {
+    "claude-p2p-chat": "./chat.js"
+  },
+  "type": "module",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "chat",
+    "p2p",
+    "peer-to-peer",
+    "terminal",
+    "tui",
+    "cli",
+    "irc",
+    "hyperswarm",
+    "decentralized",
+    "developer-tools"
+  ],
+  "author": "philatkins",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phillipatkins/claude-p2p-chat.git"
+  },
+  "homepage": "https://github.com/phillipatkins/claude-p2p-chat#readme",
+  "bugs": {
+    "url": "https://github.com/phillipatkins/claude-p2p-chat/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "chat.js",
+    "network.js",
+    "store.js",
+    "launch.sh",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "blessed": "^0.1.81",
+    "hyperswarm": "^4.9.2",
+    "b4a": "^1.6.7",
+    "hyperdht": "^6.16.1"
+  }
+}
